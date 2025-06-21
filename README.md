@@ -18,22 +18,28 @@ This project features a hybrid architecture that leverages the strengths of both
 
 ```mermaid
 graph TD
-subgraph kotlin_layer ["Android UI Layer (Kotlin)"]
-A[UI Screens (Jetpack Compose)] -- "Observes State / Sends Events" --> B[ViewModel];
-B -- "Calls Functions" --> C[RustBridge];
-C -- "Loads" --> D[Native Library (libblast_emst_core.so)];
-end
-subgraph rust_core ["Rust Core"]
-D -- "JNI Calls" --> E[JNI Bridge (lib.rs)];
-E -- "Uses" --> F[Database Logic (db.rs)];
-F -- "Interacts with" --> G[(SQLite Database)];
-end
-style A fill:#BDEB9A,stroke:#333
-style B fill:#BDEB9A,stroke:#333
-style C fill:#BDEB9A,stroke:#333
-style F fill:#F9D479,stroke:#333
-style E fill:#F9D479,stroke:#333
-style G fill:#F9D479,stroke:#333
+%% Node Definitions
+    A["UI Screens (Jetpack Compose)"]
+    B["ViewModel"]
+    C["RustBridge"]
+    D["Native Library (libblast_emst_core.so)"]
+    E["JNI Bridge (lib.rs)"]
+    F["Database Logic (db.rs)"]
+    G[("SQLite Database")]
+
+%% Links
+    A -- "Observes State / Sends Events" --> B
+    B -- "Calls Functions" --> C
+    C -- "Loads" --> D
+    D -- "JNI Calls" --> E
+    E -- "Uses" --> F
+    F -- "Interacts with" --> G
+
+%% Styling
+    classDef kotlin fill:#BDEB9A,stroke:#333
+    classDef rust fill:#F9D479,stroke:#333
+    class A,B,C kotlin
+    class D,E,F,G rust
 ```
 
 ## Building the Project
