@@ -23,13 +23,11 @@ A[UI Screens (Jetpack Compose)] -- "Observes State / Sends Events" --> B[ViewMod
 B -- "Calls Functions" --> C[RustBridge];
 C -- "Loads" --> D[Native Library (libblast_emst_core.so)];
 end
-
 subgraph rust_core ["Rust Core"]
 D -- "JNI Calls" --> E[JNI Bridge (lib.rs)];
 E -- "Uses" --> F[Database Logic (db.rs)];
 F -- "Interacts with" --> G[(SQLite Database)];
 end
-
 style A fill:#BDEB9A,stroke:#333
 style B fill:#BDEB9A,stroke:#333
 style C fill:#BDEB9A,stroke:#333
