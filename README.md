@@ -19,15 +19,15 @@ This project features a hybrid architecture that leverages the strengths of both
 ```mermaid
 graph TD
 subgraph kotlin_layer ["Android UI Layer (Kotlin)"]
-A[UI Screens (Jetpack Compose)] -- Observes State / Sends Events --> B[ViewModel];
-B -- Calls Functions --> C[RustBridge];
-C -- Loads --> D[Native Library (libblast_emst_core.so)];
+A[UI Screens (Jetpack Compose)] -- "Observes State / Sends Events" --> B[ViewModel];
+B -- "Calls Functions" --> C[RustBridge];
+C -- "Loads" --> D[Native Library (libblast_emst_core.so)];
 end
 
 subgraph rust_core ["Rust Core"]
-D -- JNI Calls --> E[JNI Bridge (lib.rs)];
-E -- Uses --> F[Database Logic (db.rs)];
-F -- Interacts with --> G[(SQLite Database)];
+D -- "JNI Calls" --> E[JNI Bridge (lib.rs)];
+E -- "Uses" --> F[Database Logic (db.rs)];
+F -- "Interacts with" --> G[(SQLite Database)];
 end
 
 style A fill:#BDEB9A,stroke:#333
