@@ -1,0 +1,79 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    id 'kotlin-kapt' // Kapt is still needed for other potential processors
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+android {
+    namespace 'com.example.blastemst'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.example.blastemst"
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+    }
+}
+
+// According to the report, this is the correct, modern way to configure
+// Compose compiler options, which avoids the duplicate value error.
+composeCompiler {
+    // This explicitly sets the flag once.
+    includeSourceInformation = true
+}
+
+dependencies {
+    // Core and JNI dependencies
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.kotlinx.serialization.json
+    implementation libs.material
+
+    // Jetpack Compose Dependencies
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.androidx.material.icons.extended.android
+    androidTestImplementation platform(libs.androidx.compose.bom)
+
+    implementation libs.androidx.activity.compose
+    implementation libs.androidx.ui
+    implementation libs.androidx.ui.graphics
+    implementation libs.androidx.ui.tooling.preview
+    implementation libs.androidx.material3
+
+    implementation libs.androidx.lifecycle.viewmodel.compose
+    implementation libs.androidx.lifecycle.runtime.ktx
+    implementation libs.androidx.lifecycle.runtime.compose
+    implementation libs.androidx.work.runtime.ktx
+
+    debugImplementation libs.androidx.ui.tooling
+    androidTestImplementation libs.androidx.ui.test.junit4
+
+    // Test dependencies
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+}

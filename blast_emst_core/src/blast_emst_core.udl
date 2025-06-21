@@ -1,0 +1,6 @@
+namespace uniffi.blast_emst_core;
+
+interface Core {
+  new();
+  string getGreeting();
+};
