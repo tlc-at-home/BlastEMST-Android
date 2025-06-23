@@ -4,6 +4,10 @@
 
 [versions]
 agp = "8.11.0-rc02"
+compose = "2.5.1"
+composeVersion = "2.5.1''"
+desugar_jdk_libs = "2.1.5"
+kizitonwoseCompose = "2.7.0"
 kotlin = "2.0.0"
 activityCompose = "1.9.0"
 composeBom = "2024.06.00"
@@ -40,6 +44,10 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 
 # Material Components for XML Themes
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
+calendar-compose = { module = "''com.kizitonwose.calendar:compose", version.ref = "composeVersion" }
+compose = { module = "io.github.kizitonwose.calendar:compose", version.ref = "compose" }
+desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
+kizitonwose-compose = { module = "com.kizitonwose.calendar:compose", version.ref = "kizitonwoseCompose" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # Kotlinx Serialization

@@ -15,6 +15,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.Instant
 import java.util.concurrent.TimeUnit
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
 data class HomeScreenState(
     val sessions: List<Session> = emptyList(),
     val appVersion: String = "",
@@ -47,8 +50,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _settings = MutableStateFlow(AppSettings())
     val settings = _settings.asStateFlow()
+
     private val soundPlayer = SoundPlayer(application.applicationContext)
     private val reminderManager = ReminderManager(application.applicationContext)
+
+    private val _sessionsByDate = MutableStateFlow<Map<LocalDate, List<Session>>>(emptyMap())
+    val sessionsByDate = _sessionsByDate.asStateFlow()
+
+    private val _currentMonth = MutableStateFlow(YearMonth.now())
+    val currentMonth = _currentMonth.asStateFlow()
 
 
     init {
@@ -71,6 +81,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val version = getAppVersion()
             val sessionsJson = RustBridge.getAllSessions()
             val sessionList: List<Session> = Json.decodeFromString(sessionsJson)
+
+            // --- Logic to group sessions by date ---
+            _sessionsByDate.value = sessionList.groupBy { session ->
+                // The end_time from Rust is an RFC3339 string like "2025-06-22T11:59:43.123Z"
+                // We parse it and convert it to a simple LocalDate (year-month-day)
+                session.end_time?.let {
+                    LocalDate.parse(it, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                }
+            }.filterKeys { it != null }.mapKeys { it.key!! } // Clean up the map
+            // --- End of grouping logic ---
+
             _uiState.update { currentState ->
                 currentState.copy(
                     sessions = sessionList,
@@ -279,5 +300,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             RustBridge.updateProfile(profileJson)
             loadProfile()
         }
+    }
+
+    // Functions to handle month navigation ---
+    fun onNextMonth() {
+        _currentMonth.update { it.plusMonths(1) }
+    }
+
+    fun onPreviousMonth() {
+        _currentMonth.update { it.minusMonths(1) }
     }
 }
