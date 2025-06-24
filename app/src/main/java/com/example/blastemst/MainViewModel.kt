@@ -18,10 +18,15 @@ import java.util.concurrent.TimeUnit
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import androidx.core.net.toUri
+
 data class HomeScreenState(
     val sessions: List<Session> = emptyList(),
     val appVersion: String = "",
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val lastSessionReps: Int = 0,
+    val sessionsThisWeek: Int = 0,
+    val weeklySessionGoal: Int = 5
 )
 
 data class AppSettings(
@@ -81,6 +86,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val version = getAppVersion()
             val sessionsJson = RustBridge.getAllSessions()
             val sessionList: List<Session> = Json.decodeFromString(sessionsJson)
+            // Find the reps from the most recent *completed* session
+            val lastSessionReps = sessionList.firstOrNull { it.end_time != null }?.rep_count ?: 0
+            // Get the session count for the current week from Rust
+            val sessionsThisWeek = RustBridge.getSessionCountForWeek()
+            // Get the weekly goal from our already loaded settings
+            val weeklyGoal = _settings.value.weeklySessionGoal
 
             // --- Logic to group sessions by date ---
             _sessionsByDate.value = sessionList.groupBy { session ->
@@ -96,7 +107,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 currentState.copy(
                     sessions = sessionList,
                     appVersion = version,
-                    isLoading = false
+                    isLoading = false,
+                    lastSessionReps = lastSessionReps,
+                    sessionsThisWeek = sessionsThisWeek,
+                    weeklySessionGoal = weeklyGoal
                 )
             }
         }
@@ -167,7 +181,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Log.i("ViewModel", "Settings loaded: ${_settings.value}")
             // Re-initialize SoundPlayer if sound URI changes
             _settings.value.repSoundUri?.let {
-                uriString -> soundPlayer.loadSoundFromUri(Uri.parse(uriString))
+                uriString -> soundPlayer.loadSoundFromUri(uriString.toUri())
             } ?: run {
                 soundPlayer.loadDefaultSound() // Or unload if no default desired
             }
@@ -309,5 +323,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onPreviousMonth() {
         _currentMonth.update { it.minusMonths(1) }
+    }
+
+    fun onMonthScrolled(newMonth: YearMonth) {
+        _currentMonth.value = newMonth
     }
 }

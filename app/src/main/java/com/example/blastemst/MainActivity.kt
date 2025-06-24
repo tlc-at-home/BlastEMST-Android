@@ -1,6 +1,5 @@
 package com.example.blastemst
 
-import android.app.TimePickerDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -48,11 +47,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -85,7 +84,6 @@ import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
 import java.util.Locale
 
 // Sealed class to define all our navigation destinations
@@ -129,7 +127,8 @@ class MainActivity : ComponentActivity() {
                     onUpdateRepSoundUri = { uri -> viewModel.updateRepSoundUri(uri) },
                     onUpdateHapticFeedback = { isEnabled -> viewModel.updateHapticFeedback(isEnabled) },
                     onNextMonth = { viewModel.onNextMonth() },
-                    onPreviousMonth = { viewModel.onPreviousMonth() }
+                    onPreviousMonth = { viewModel.onPreviousMonth() },
+                    onMonthScrolled = { newMonth -> viewModel.onMonthScrolled(newMonth) }
                 )
             }
         }
@@ -154,7 +153,8 @@ fun MainAppRouter(
     onUpdateRepSoundUri: (Uri?) -> Unit,
     onUpdateHapticFeedback: (Boolean) -> Unit,
     onNextMonth: () -> Unit,
-    onPreviousMonth: () -> Unit
+    onPreviousMonth: () -> Unit,
+    onMonthScrolled: (YearMonth) -> Unit
 ) {
     var currentScreen by remember { mutableStateOf<AppScreen>(AppScreen.Home) }
 
@@ -174,9 +174,9 @@ fun MainAppRouter(
             return@Surface
         }
 
-        when (val screen = currentScreen) {
+        when (currentScreen) {
             is AppScreen.Home -> HomeScreen(
-                appVersion = uiState.appVersion,
+                uiState = uiState,
                 onNavigate = { newScreen -> currentScreen = newScreen },
                 onStartSession = onStartSession
             )
@@ -185,7 +185,8 @@ fun MainAppRouter(
                 currentMonth = currentMonth,
                 onNavigate = { newScreen -> currentScreen = newScreen },
                 onNextMonth = onNextMonth,
-                onPreviousMonth = onPreviousMonth
+                onPreviousMonth = onPreviousMonth,
+                onMonthScrolled = onMonthScrolled
             )
             is AppScreen.Profile -> ProfileScreen(
                 userProfile = userProfile,
@@ -200,7 +201,6 @@ fun MainAppRouter(
                 onNavigate = { newScreen -> currentScreen = newScreen }
             )
             is AppScreen.ActiveSession -> ActiveSessionScreen(
-                session = screen.session,
                 repCount = repCount,
                 settings = settings,
                 onLogRep = onAddRep,
@@ -213,14 +213,14 @@ fun MainAppRouter(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    appVersion: String,
+    uiState: HomeScreenState,
     onNavigate: (AppScreen) -> Unit,
     onStartSession: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Blast EMST Home") },
+                title = { Text("Blast EMST") },
                 actions = {
                     IconButton(onClick = { onNavigate(AppScreen.Profile) }) {
                         Icon(Icons.Default.Person, contentDescription = "Profile")
@@ -230,43 +230,65 @@ fun HomeScreen(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onStartSession) {
-                Icon(Icons.Filled.Add, contentDescription = "Start New Session")
-            }
         }
     ) { innerPadding ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    "Welcome!",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(bottom = 32.dp)
-                )
-                Button(
-                    onClick = { onNavigate(AppScreen.History) },
-                    modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    StatCard(
+                        label = "Reps Last Session",
+                        value = uiState.lastSessionReps.toString(),
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatCard(
+                        label = "Sessions This Week",
+                        value = "${uiState.sessionsThisWeek} / ${uiState.weeklySessionGoal}",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(64.dp))
+
+                Button(
+                    onClick = onStartSession,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                    shape = CircleShape
+                ) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = "Start New Session",
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                    )
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Text("Start New Session", style = MaterialTheme.typography.titleMedium)
+                }
+
+                // --- CHANGE 1: Increased the spacing from 16.dp to 32.dp ---
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // --- CHANGE 2: Changed TextButton to OutlinedButton ---
+                OutlinedButton(onClick = { onNavigate(AppScreen.History) }) {
                     Text("View Session History")
                 }
             }
+
             Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(text = "Builder: Tony C", style = MaterialTheme.typography.bodySmall)
-                Text(text = appVersion, style = MaterialTheme.typography.bodySmall)
+                Text(text = uiState.appVersion, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -280,6 +302,7 @@ fun HistoryScreen(
     onNavigate: (AppScreen) -> Unit,
     onNextMonth: () -> Unit,
     onPreviousMonth: () -> Unit,
+    onMonthScrolled: (YearMonth) -> Unit
 ) {
     val firstDayOfWeek = remember { firstDayOfWeekFromLocale() }
     val calendarState = rememberCalendarState(
@@ -296,9 +319,13 @@ fun HistoryScreen(
         sessionsByDate[selectedDate].orEmpty()
     }
 
-    // This effect will scroll the calendar when the month in the ViewModel changes
-    LaunchedEffect(currentMonth) {
-        calendarState.animateScrollToMonth(currentMonth)
+    // This effect watches for swipes and updates the ViewModel
+    LaunchedEffect(calendarState.firstVisibleMonth) {
+        val newMonth = calendarState.firstVisibleMonth.yearMonth
+        // To prevent an infinite loop, only call the update if the month is different
+        if (newMonth != currentMonth) {
+            onMonthScrolled(newMonth)
+        }
     }
 
     Scaffold(
@@ -450,6 +477,36 @@ fun DaysOfWeekHeader(firstDayOfWeek: java.time.DayOfWeek) {
 }
 
 @Composable
+fun StatCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+@Composable
 fun SessionDetailItem(session: Session) {
     val timeFormatter = remember { DateTimeFormatter.ofPattern("h:mm a") }
     val startTime = remember {
@@ -508,8 +565,10 @@ fun SettingsScreen(
     onUpdateHapticFeedback: (Boolean) -> Unit,
     onNavigate: (AppScreen) -> Unit
 ) {
+    // Local states for UI elements that might be edited before saving
     var defaultReps by remember(settings.defaultReps) { mutableStateOf(settings.defaultReps.toString()) }
     var weeklyGoal by remember(settings.weeklySessionGoal) { mutableStateOf(settings.weeklySessionGoal.toString()) }
+    var defaultPressure by remember(settings.defaultPressure) { mutableStateOf(settings.defaultPressure.toString()) }
     var remindersEnabled by remember(settings.remindersEnabled) { mutableStateOf(settings.remindersEnabled) }
     var appTheme by remember(settings.appTheme) { mutableStateOf(settings.appTheme) }
 
@@ -520,6 +579,7 @@ fun SettingsScreen(
         onResult = { uri: Uri? ->
             if (uri != null) {
                 try {
+                    // Persist permission for long-term access
                     val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
                     context.contentResolver.takePersistableUriPermission(uri, flags)
                     Log.d("SettingsScreen", "Persisted read permission for URI: $uri")
@@ -537,9 +597,11 @@ fun SettingsScreen(
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = {
+                        // Consolidate saving logic before navigating
                         val updatedSettings = settings.copy(
                             defaultReps = defaultReps.toIntOrNull() ?: settings.defaultReps,
                             weeklySessionGoal = weeklyGoal.toIntOrNull() ?: settings.weeklySessionGoal,
+                            defaultPressure = defaultPressure.toIntOrNull() ?: settings.defaultPressure,
                             remindersEnabled = remindersEnabled,
                             appTheme = appTheme,
                         )
@@ -560,11 +622,14 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Training Defaults", style = MaterialTheme.typography.titleMedium)
+            // "Training Defaults" changed to "Training Parameters"
+            Text("Training Parameters", style = MaterialTheme.typography.titleMedium)
+
+            // "Default Reps per Session" changed to "Reps per Session"
             OutlinedTextField(
                 value = defaultReps,
                 onValueChange = { defaultReps = it },
-                label = { Text("Default Reps per Session") },
+                label = { Text("Reps per Session") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -576,10 +641,20 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // "Default Pressure Setting" changed to "Pressure Setting"
+            OutlinedTextField(
+                value = defaultPressure,
+                onValueChange = { defaultPressure = it },
+                label = { Text("Pressure Setting") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             Text("Sound & Haptics", style = MaterialTheme.typography.titleMedium)
 
-            Text("Repetition Sound", style = MaterialTheme.typography.bodyLarge)
+            // "Repetition Sound" changed to "Rep Counter Sound"
+            Text("Rep Counter Sound", style = MaterialTheme.typography.bodyLarge)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -607,7 +682,8 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Haptic Feedback on Rep", style = MaterialTheme.typography.bodyLarge)
+                // "Haptic Feedback on Rep" changed to "Haptic Feedback on Rep Counter"
+                Text("Haptic Feedback on Rep Counter", style = MaterialTheme.typography.bodyLarge)
                 Switch(
                     checked = settings.isHapticFeedbackEnabled,
                     onCheckedChange = { isEnabled ->
@@ -629,41 +705,6 @@ fun SettingsScreen(
                     checked = remindersEnabled,
                     onCheckedChange = { remindersEnabled = it }
                 )
-            }
-
-            AnimatedVisibility(visible = remindersEnabled) {
-                Column {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val context = LocalContext.current
-                    val calendar = Calendar.getInstance()
-                    val hour = calendar[Calendar.HOUR_OF_DAY]
-                    val minute = calendar[Calendar.MINUTE]
-
-                    val timePickerDialog = TimePickerDialog(
-                        context,
-                        { _, selectedHour: Int, selectedMinute: Int ->
-                            // Here you would update the hour and minute in your ViewModel/Settings
-                        }, hour, minute, false
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { timePickerDialog.show() }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Reminder Time", style = MaterialTheme.typography.bodyLarge)
-
-                        // Placeholder text - you'd get this from your ViewModel state
-                        Text(
-                            text = "8:00 PM",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
             }
 
             Text("Theme", style = MaterialTheme.typography.bodyLarge)
@@ -697,7 +738,6 @@ fun SettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveSessionScreen(
-    session: Session,
     repCount: Long,
     settings: AppSettings,
     onLogRep: () -> Unit,
