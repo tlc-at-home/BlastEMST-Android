@@ -1,26 +1,23 @@
 # This file defines the versions of all the plugins and libraries used in the project.
-# The report noted that specific AGP and Kotlin versions can cause this error.
-# We are aligning to a known-stable combination to resolve this.
+# This configuration uses a known-stable combination of versions.
 
 [versions]
-agp = "8.11.0-rc02"
-compose = "2.5.1"
-composeVersion = "2.5.1''"
+agp = "8.11.0"
+kotlin = "2.2.0"
+composeCompiler = "2.2.0"
+activityCompose = "1.10.1"
+composeBom = "2025.06.01"
+coreKtx = "1.16.0"
 desugar_jdk_libs = "2.1.5"
 kizitonwoseCompose = "2.7.0"
-kotlin = "2.0.0"
-activityCompose = "1.9.0"
-composeBom = "2024.06.00"
-coreKtx = "1.13.1"
+appcompat = "1.7.1"
+kotlinxSerializationJson = "1.9.0"
+lifecycleRuntimeKtx = "2.9.1"
+material = "1.12.0"
+workRuntimeKtx = "2.10.2"
 junit = "4.13.2"
 androidxJunit = "1.2.1"
 espressoCore = "3.6.1"
-appcompat = "1.7.0"
-kotlinxSerializationJson = "1.6.3"
-lifecycleRuntimeKtx = "2.9.1"
-material = "1.12.0"
-materialIconsExtendedAndroid = "1.7.8"
-workRuntimeKtx = "2.10.2"
 
 [libraries]
 # Core and Activity
@@ -35,17 +32,15 @@ androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", versi
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
-androidx-material-icons-extended-android = { module = "androidx.compose.material:material-icons-extended-android", version.ref = "materialIconsExtendedAndroid" }
+androidx-material-icons-extended-android = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 
-# Material Components for XML Themes
+# Other Dependencies
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
-calendar-compose = { module = "''com.kizitonwose.calendar:compose", version.ref = "composeVersion" }
-compose = { module = "io.github.kizitonwose.calendar:compose", version.ref = "compose" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 kizitonwose-compose = { module = "com.kizitonwose.calendar:compose", version.ref = "kizitonwoseCompose" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
@@ -63,6 +58,5 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-# The report recommends using this plugin for Kotlin 2.0+
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "composeCompiler" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

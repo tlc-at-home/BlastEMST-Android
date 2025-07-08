@@ -15,6 +15,7 @@ object RustBridge {
     external fun endSession(sessionId: Long, notes: String)
     external fun getSessionCountForWeek(): Int
     external fun getLastSessionEndTime(): String
+    external fun deleteSession(sessionId: Long)
 
     // Rep functions
     external fun addRep(sessionId: Long)

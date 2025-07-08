@@ -282,3 +282,12 @@ pub fn get_last_session_end_time(conn: &Connection) -> Result<Option<String>> {
     )
     .optional() // This makes it return Ok(None) if no rows are found, instead of an Error
 }
+
+pub fn delete_session(conn: &Connection, session_id: i64) -> Result<()> {
+    let rows_affected = conn.execute("DELETE FROM sessions WHERE id = ?1", [session_id])?;
+    if rows_affected == 0 {
+        Err(rusqlite::Error::QueryReturnedNoRows)
+    } else {
+        Ok(())
+    }
+}

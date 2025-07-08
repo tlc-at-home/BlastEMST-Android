@@ -324,3 +324,21 @@ pub extern "C" fn Java_com_example_blastemst_RustBridge_getLastSessionEndTime(
     };
     env.new_string(result_str).expect("Couldn't create Java string").into_raw()
 }
+
+#[unsafe(no_mangle)]
+#[allow(non_snake_case)]
+pub extern "C" fn Java_com_example_blastemst_RustBridge_deleteSession(
+    _env: JNIEnv,
+    _class: JClass,
+    session_id: jlong,
+) {
+    info!("Attempting to delete session with id: {}", session_id);
+    let db_conn_guard = DB_CONNECTION.lock().unwrap();
+    if let Some(conn) = &*db_conn_guard {
+        if let Err(e) = db::delete_session(conn, session_id) {
+            error!("Failed to delete session {}: {}", session_id, e);
+        }
+    } else {
+        error!("Database connection not initialized for delete operation.");
+    }
+}
