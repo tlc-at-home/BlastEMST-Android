@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -37,6 +39,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -101,6 +104,7 @@ sealed class AppScreen {
     data object History : AppScreen()
     data object Profile : AppScreen()
     data object Settings : AppScreen()
+    data object About : AppScreen()
     data class ActiveSession(val session: Session) : AppScreen()
 }
 
@@ -190,7 +194,7 @@ fun MainAppRouter(
             return@Surface
         }
 
-        when (currentScreen) {
+        when (val screen = currentScreen) {
             is AppScreen.Home -> HomeScreen(
                 uiState = uiState,
                 onNavigate = { newScreen -> currentScreen = newScreen },
@@ -217,7 +221,12 @@ fun MainAppRouter(
                 onUpdateHapticFeedback = onUpdateHapticFeedback,
                 onNavigate = { newScreen -> currentScreen = newScreen }
             )
+            is AppScreen.About -> AboutScreen(
+                appVersion = uiState.appVersion,
+                onNavigateUp = { currentScreen = AppScreen.Settings }
+            )
             is AppScreen.ActiveSession -> ActiveSessionScreen(
+                session = screen.session,
                 repCount = repCount,
                 settings = settings,
                 notes = activeSessionNotes,
@@ -337,7 +346,7 @@ fun StatCard(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HistoryScreen(
     sessionsByDate: Map<LocalDate, List<Session>>,
@@ -781,13 +790,23 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            OutlinedButton(
+                onClick = { onNavigate(AppScreen.About) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("About This App")
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun ActiveSessionScreen(
+    session: Session,
     repCount: Long,
     settings: AppSettings,
     notes: String,
@@ -890,4 +909,94 @@ fun BlastEmstTheme(
         colorScheme = colorScheme,
         content = content
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AboutScreen(
+    appVersion: String,
+    onNavigateUp: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("About Blast EMST") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateUp) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Technical Summary",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "This project is a hybrid Android application that demonstrates a modern cross-platform architecture. The entire backend, including all business logic and database management, is written in Rust for high performance and memory safety. The UI is a fully native Android front end built with Kotlin and Jetpack Compose, following a modern, single-activity MVVM architecture.",
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            Text(
+                text = "Implemented Features",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            val features = listOf(
+                "Dashboard Home Screen" to "Displays at-a-glance stats for last session and weekly progress.",
+                "Interactive Calendar History" to "A visual calendar to view session history, with tap-to-view details.",
+                "Swipe-to-Delete" to "In the history view, swipe left on any session to delete it, with a confirmation dialog.",
+                "Active Session Tracking" to "A real-time screen for logging reps via tap input and taking notes.",
+                "Smart Reminder System" to "Sends background notifications based on user inactivity and weekly goals.",
+                "Customizable Settings" to "A dedicated screen to manage training parameters, theme, and feedback options."
+            )
+
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                features.forEach { (title, description) ->
+                    FeatureListItem(title = title, description = description)
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = "Version: $appVersion",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun FeatureListItem(title: String, description: String) {
+    Row(verticalAlignment = Alignment.Top) {
+        Icon(
+            imageVector = Icons.Default.CheckCircle,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(text = title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+            Text(text = description, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
 }
