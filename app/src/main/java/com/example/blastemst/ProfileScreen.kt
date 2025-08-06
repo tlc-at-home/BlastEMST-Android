@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,7 +23,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import android.content.Intent
 
 @OptIn(ExperimentalMaterial3Api::class) // Added for TopAppBar and Scaffold
 @Composable
@@ -31,11 +34,14 @@ fun ProfileScreen(
     onSaveProfile: (UserProfile) -> Unit,
     onNavigateHome: () -> Unit
 ) {
+    val context = LocalContext.current
     // Local states for UI elements, initialized from userProfile
     var firstName by remember(userProfile.id) { mutableStateOf(userProfile.first_name) }
     var lastName by remember(userProfile.id) { mutableStateOf(userProfile.last_name) }
     var dob by remember(userProfile.id) { mutableStateOf(userProfile.dob) }
     var speechTherapist by remember(userProfile.id) { mutableStateOf(userProfile.speech_therapist) }
+    var exportUnlocked by remember { mutableStateOf(RustBridge.getSetting("export_feature_unlocked", "false").toBoolean()) }
+
 
     Scaffold(
         topBar = {
@@ -98,6 +104,36 @@ fun ProfileScreen(
                 label = { Text("Speech Therapist") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // Temporary button for toggling the export feature
+            Button(
+                onClick = {
+                    val newValue = !exportUnlocked
+                    RustBridge.setSetting("export_feature_unlocked", newValue.toString())
+                    exportUnlocked = newValue
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (exportUnlocked) "Disable Export Feature" else "Enable Export Feature")
+            }
+
+            if (exportUnlocked) {
+                Button(
+                    onClick = {
+                        val sessionData = RustBridge.exportSessions()
+                        val sendIntent: Intent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, sessionData)
+                            type = "text/plain"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, null)
+                        context.startActivity(shareIntent)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Export Session Data")
+                }
+            }
         }
     }
 }

@@ -342,3 +342,29 @@ pub extern "C" fn Java_com_example_blastemst_RustBridge_deleteSession(
         error!("Database connection not initialized for delete operation.");
     }
 }
+
+#[unsafe(no_mangle)]
+#[allow(non_snake_case)]
+pub extern "C" fn Java_com_example_blastemst_RustBridge_exportSessions(
+    env: JNIEnv,
+    _class: JClass,
+) -> jstring {
+    info!("Attempting to export sessions.");
+    let db_conn_guard = DB_CONNECTION.lock().unwrap();
+    let default_string = env.new_string("").expect("Couldn't create default string.");
+    if let Some(conn) = &*db_conn_guard {
+        match db::export_sessions(conn) {
+            Ok(export_data) => {
+                info!("Successfully exported session data.");
+                env.new_string(export_data).unwrap_or(default_string).into_raw()
+            }
+            Err(e) => {
+                error!("Failed to export sessions: {}", e);
+                default_string.into_raw()
+            }
+        }
+    } else {
+        error!("Database connection not initialized.");
+        default_string.into_raw()
+    }
+}

@@ -28,4 +28,7 @@ object RustBridge {
     // Settings functions
     external fun getSetting(key: String, defaultValue: String): String
     external fun setSetting(key: String, value: String)
+
+    // Export function
+    external fun exportSessions(): String
 }

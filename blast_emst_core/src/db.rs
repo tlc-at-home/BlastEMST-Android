@@ -291,3 +291,26 @@ pub fn delete_session(conn: &Connection, session_id: i64) -> Result<()> {
         Ok(())
     }
 }
+
+pub fn export_sessions(conn: &Connection) -> Result<String> {
+    let profile = get_profile(conn)?;
+    let sessions = get_all_sessions(conn)?;
+
+    let mut export_string = String::new();
+    export_string.push_str(&format!("Session Export for: {} {}\n", profile.first_name, profile.last_name));
+    export_string.push_str(&format!("Date of Birth: {}\n", profile.dob));
+    export_string.push_str(&format!("Speech Therapist: {}\n\n", profile.speech_therapist));
+
+    for session in sessions {
+        export_string.push_str(&format!("Session ID: {}\n", session.id));
+        export_string.push_str(&format!("  Start Time: {}\n", session.start_time.to_rfc2822()));
+        if let Some(end_time) = session.end_time {
+            export_string.push_str(&format!("  End Time:   {}\n", end_time.to_rfc2822()));
+        }
+        export_string.push_str(&format!("  Pressure: {} cmH2O\n", session.pressure_setting));
+        export_string.push_str(&format!("  Repetitions: {}\n", session.rep_count));
+        export_string.push_str(&format!("  Notes: {}\n\n", session.notes));
+    }
+
+    Ok(export_string)
+}
