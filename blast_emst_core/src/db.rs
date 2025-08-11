@@ -303,9 +303,9 @@ pub fn export_sessions(conn: &Connection) -> Result<String> {
 
     for session in sessions {
         export_string.push_str(&format!("Session ID: {}\n", session.id));
-        export_string.push_str(&format!("  Start Time: {}\n", session.start_time.to_rfc2822()));
+        export_string.push_str(&format!("  Start Time: {}\n", session.start_time.format("%H:%M:%S")));
         if let Some(end_time) = session.end_time {
-            export_string.push_str(&format!("  End Time:   {}\n", end_time.to_rfc2822()));
+            export_string.push_str(&format!("  End Time:   {}\n", end_time.format("%H:%M:%S")));
         }
         export_string.push_str(&format!("  Pressure: {} cmH2O\n", session.pressure_setting));
         export_string.push_str(&format!("  Repetitions: {}\n", session.rep_count));
